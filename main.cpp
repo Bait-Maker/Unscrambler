@@ -34,12 +34,28 @@ public:
     Board(int size){ boardSize = size;}
     void displayBoard();
     void generateBoard(const vector <string> &data, int piecesLeft);
+    void printWords();
 
 private:
     int boardSize;
     string pieces;
+    vector <string> wordList;
 
 };// end class Board
+//----------------------------------------------------------------------------
+
+void Board ::printWords(){
+    for(int i = 0; i < wordList.size(); i++){
+        if(i == wordList.size()-1){
+            cout << wordList.at(i) << ".";
+        }
+        else{
+            cout << wordList.at( i) << ", ";
+        }
+    }
+    cout << endl;
+}// end printWords()
+//----------------------------------------------------------------------------
 
 void Board ::displayBoard() {
     int counter = 0;
@@ -84,6 +100,14 @@ void Board ::displayBoard() {
 
     }
 
+   //  displaying current board words
+   cout << "Current board words: ";
+   for(int i = 0; i < wordList.size(); i++){
+       cout << wordList.at(i) << " ";
+   }
+   cout << endl;
+   cout << endl;
+
 }// end displayBoard()
 //----------------------------------------------------------------------------
 
@@ -101,12 +125,14 @@ void Board ::generateBoard(const vector <string> &data, int piecesLeft){
                 continue;
             }
             else {
+                wordList.push_back(word);
                 temp.append(word);
                 piecesLeft = piecesLeft - word.size();
 //                cout << piecesLeft << endl;
             }
         }
         word = data.at(rand()%data.size());
+        wordList.push_back(word);
         word.append(" ");
         if(word.size() > piecesLeft){
             continue;
@@ -114,7 +140,7 @@ void Board ::generateBoard(const vector <string> &data, int piecesLeft){
         else{
             temp.append(word);
             piecesLeft = piecesLeft - word.size();
-            cout << piecesLeft << endl;
+            //cout << piecesLeft << endl;
 
             }
         }// end while
@@ -127,7 +153,7 @@ void Board ::generateBoard(const vector <string> &data, int piecesLeft){
 
     }// end while
 
-    pieces = temp; // setting pieces equal to
+    pieces = temp; // will be using pieces to when displaying board
 
 
     // making sure it was generating the correct random words
@@ -156,8 +182,6 @@ void readInDictionary(vector <string> & dictionary){
 //----------------------------------------------------------------------------
 
 
-
-
 int main(){
 
     srand(1);
@@ -166,10 +190,7 @@ int main(){
     int totalPiecesLeft;
     vector <string> dictionary;
 
-
     readInDictionary(dictionary); // reads in words from dictionary and stores them into vector
-
-
 
 
     // displaying start up text
@@ -187,10 +208,8 @@ int main(){
     cin >> userInput;
     userInput = tolower(userInput);
 
-    if(userInput == 'q'){
-        cout << "Thank you for playing!" << endl;
-    }
-    else {
+
+    if(userInput != 'q') {
         cout << "Choose your board size (must be a number greater than or equal to 4):";
         cin >> sizeInput;
         cout << endl;
@@ -205,7 +224,7 @@ int main(){
         totalPiecesLeft = sizeInput * sizeInput;   // initializing totalPieces
         //TODO generate board
         myBoard.generateBoard(dictionary, totalPiecesLeft);
-        myBoard.displayBoard();
+        //myBoard.displayBoard();
 
         cout << "Choose the number of times you would like the board to be scrambled (must be a single number >= 1):";
         cin >> sizeInput;
@@ -216,9 +235,13 @@ int main(){
                  << "Choose the number of times you would like the board to be scrambled (must be a single number >= 1):";
             cin >> sizeInput;
         }
+        // TODO Scramble and print here
 
 
-
+        cout << "These are the words that you should try to spell out using the board, in order:\n"
+             << "   ";
+        myBoard.printWords();
+        cout << endl;
 
         // !!appending space works so far!!
 //        string test = "Test";
@@ -226,16 +249,43 @@ int main(){
 //        cout << test << "space" << endl;
 //        cout << endl;
 
-        myBoard.displayBoard();
+
+        //TODO scrambled words here
+
+        while(userInput != 'q'){
+            myBoard.displayBoard(); // TODO supposed to be scrambled
+
+            cout << "Enter one of the following:\n"
+                 << "   R to rotate a row or column,\n"
+                 << "   C to view what the completed board should look like,\n"
+                 << "   B to reset the board back to the beginning,\n"
+                 << "   G to generate a new board with new random words,\n"
+                 << "   S to have the computer automatically solve a board that you enter (5 points extra credit),\n"
+                 << "   Q to quit." << endl;
+            cout << "Your choice:";
+            cin >> userInput;
+            tolower(userInput);
+
+            switch(userInput){
+                case 'c':
+                    cout << "The completed board should look like:" << endl;
+                    myBoard.displayBoard();
+
+
+                default:
+                    break;
+
+            }// end switch
+        }
+
+    }// end initial prompts
 
 
 
 
 
-    }
 
-
-
+    cout << "Thank you for playing!" << endl;
     cout << "Exiting program..." << endl;
 
     return 0;
