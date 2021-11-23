@@ -15,6 +15,15 @@
    3 | n | m |   |   |
       ---------------
  *
+ * Late Submission essay
+ * 
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 
@@ -33,20 +42,26 @@ class Board{
 public:
     Board(int size){ boardSize = size;}
     int getSize(){return boardSize;}
+    string getPieces(){return pieces;}
+    void resetBoard(){scrambledPieces = userScrambledPieces;}
+    void setUpNewBoard(){wordList.erase(wordList.begin(), wordList.end());}
     void displayBoard(bool printScrambled);
     void generateBoard(const vector <string> &data, int piecesLeft);
     void printWords();
     void scrambler(int numOfScrambles);
     void specificScrambler(char rowOrColumn, int index, int rotationAmount);
-    void moveRow(int randomRow, int scrambleAmount, int theBoardSize, string &piecesToScramble);
-    void moveColumn(int randomColumn, int scrambleAmount, int theBoardSize, string &piecesToScramble );
+    void moveRow(int randomRow, int theBoardSize, string &piecesToScramble);
+    void moveColumn(int columnIndex, int theBoardSize, string &piecesToScramble);
+    void setUpRotation();
+    bool checkForWin();
 
 
 private:
-    int boardSize;
-    string pieces;
-    string scrambledPieces;
-    vector <string> wordList;
+    int boardSize;                // size of the board;
+    string pieces;                // pieces of an unscrambled board
+    string scrambledPieces;       // pieces of the board when first scrambled
+    string userScrambledPieces;   // pieces of the board when user is doing the scrambling
+    vector <string> wordList;     // holds list of words on the board but without spaces and in order
 
 };// end class Board
 //----------------------------------------------------------------------------
@@ -79,7 +94,7 @@ void Board ::displayBoard(bool printScrambled=true) {
 
     int counter = 0;
 
-    cout << "Current board:" << endl;
+
     cout << "       ";
     // printing column numbers
     for(int i = 0; i < boardSize; i++){
@@ -101,8 +116,8 @@ void Board ::displayBoard(bool printScrambled=true) {
     for(int i = 0; i < boardSize; i++){
         cout << "   " << i;
         for(int j = 0; j < boardSize; j++){
-                cout << " | " << piecesToPrint.at(counter);
-                counter++;
+            cout << " | " << piecesToPrint.at(counter);
+            counter++;
         }
 
         cout << " |" << endl;
@@ -119,10 +134,10 @@ void Board ::displayBoard(bool printScrambled=true) {
 
     }
 
-   //  displaying current board words
+    //  displaying current board words
 
-   cout << "Current board words: " << piecesToPrint << endl;
-   cout << endl;
+    cout << "Current board words: " << piecesToPrint << endl;
+    cout << endl;
 
 }// end displayBoard()
 //----------------------------------------------------------------------------
@@ -137,8 +152,9 @@ void Board ::generateBoard(const vector <string> &data, int piecesLeft){
     bool isBoardFull = false;
 
     while(!isBoardFull){
-        randIndex = rand() % data.size();
+
         if(piecesLeft > 5){
+            randIndex = rand() % data.size();
             // adding random words into
             randWord = data.at(randIndex);
             wordList.push_back(randWord);
@@ -148,6 +164,7 @@ void Board ::generateBoard(const vector <string> &data, int piecesLeft){
             continue;
         }
         else if(piecesLeft <= 5 && piecesLeft > 2){
+            randIndex = rand() % data.size();
             randWord = data.at(randIndex);
             if(randWord.size() > piecesLeft){
                 continue;
@@ -182,7 +199,7 @@ void Board ::generateBoard(const vector <string> &data, int piecesLeft){
 //----------------------------------------------------------------------------
 
 // rotates row to the right by a specific amount
-void Board ::moveRow(int randomRow, int scrambleAmount, int theBoardSize, string &piecesToScramble) {
+void Board ::moveRow(int randomRow, int theBoardSize, string &piecesToScramble) {
 
     // Getting the right most index of the row
     int lastIndex = ((randomRow + 1) * theBoardSize) - 1;
@@ -190,44 +207,37 @@ void Board ::moveRow(int randomRow, int scrambleAmount, int theBoardSize, string
     // Store the right most character for safe keeping
     char lastChar = piecesToScramble.at(lastIndex);
 
-   for(int j = 0; j < scrambleAmount; j++){
 
     int i;
     for(i = lastIndex; i > lastIndex - theBoardSize + 1; i--){
         piecesToScramble.at(i) = piecesToScramble.at(i-1);
     }
 
-       // putting the last index character first
-       piecesToScramble.at(i) = lastChar;
+    // putting the last index character first
+    piecesToScramble.at(i) = lastChar;
 
-   }
 
 }// end moveRow()
 //----------------------------------------------------------------------------
 
 // rotates a column downwards by a specific amount
-void Board ::moveColumn(int randomColumn, int scrambleAmount, int theBoardSize, string &piecesToScramble) {
+void Board ::moveColumn(int columnIndex, int theBoardSize, string &piecesToScramble) {
 
     // getting the last index of the random column
-    int lastIndex = (theBoardSize * (theBoardSize -1)) + randomColumn;
+    int lastIndex = (theBoardSize * (theBoardSize -1)) + columnIndex;
 
     // Storing the last character of the column for safe keeping
     char lastChar = piecesToScramble.at(lastIndex);
 
-   for(int j = 0; j < scrambleAmount; j++){
+    int i;
+    int z = lastIndex;
+    for(i = lastIndex; i > lastIndex - theBoardSize + 1; i--){
+        piecesToScramble.at(z) = piecesToScramble.at(z-boardSize);
+        z = z - boardSize;
+    }
 
-       int i;
-       int z = lastIndex;
-       for(i = lastIndex; i > lastIndex - theBoardSize + 1; i--){
-           piecesToScramble.at(z) = piecesToScramble.at(z-boardSize);
-           z = z - boardSize;
-       }
-
-       // putting the last index character at the beginning of the column
-       piecesToScramble.at(z) = lastChar;
-   }
-
-
+    // putting the last index character at the beginning of the column
+    piecesToScramble.at(z) = lastChar;
 
 }// end moveColumn()
 //----------------------------------------------------------------------------
@@ -243,26 +253,98 @@ void Board ::moveColumn(int randomColumn, int scrambleAmount, int theBoardSize, 
 
 // scrambles the board by row/column
 void Board ::scrambler(int numOfScrambles) {
-    scrambledPieces = pieces;   //
+    scrambledPieces = pieces;   // pieces of the board when scrambled for the first time
     int size = boardSize;       // Size of the board
     int randomRow = 0;
-    int randomColumn = 1;  // TODO change this to 0 when done
+    int randomColumn = 0;
+
 
     // when starting the program, scrambles the board
     for(int i = 0; i < abs(numOfScrambles); i++){
-        //randomRow = rand() % size; // TODO uncomment this when done
-        moveRow(randomRow, numOfScrambles, size, scrambledPieces);
-        //randomColumn = rand() % size; // TODO uncomment this when done
-        moveColumn(randomColumn, numOfScrambles, size, scrambledPieces);
+        randomRow = rand() % boardSize;
+        moveRow(randomRow, boardSize, scrambledPieces);
+        randomColumn = rand() % boardSize;
+        moveColumn(randomColumn, boardSize, scrambledPieces);
     }
+    userScrambledPieces = scrambledPieces;    // copying of scrambled pieces in case of a reset
 }// end scrambler()
 //----------------------------------------------------------------------------
 
 void Board ::specificScrambler(char rowOrColumn, int index, int rotationAmount) {
-    
-}
 
+    int size = boardSize;                    // size of the board
 
+    // user enters a negative rotation
+    if(rotationAmount < 0){
+
+        int num = rotationAmount;
+        rotationAmount = size + rotationAmount;
+    }
+
+    // rotating a column
+    if(rowOrColumn == 'c'){
+        for(int i = 0; i < abs(rotationAmount); i++){
+            moveColumn(index, size, scrambledPieces);
+        }
+    }
+        // rotating a row
+    else{
+        for(int i = 0; i < abs(rotationAmount); i++){
+            moveRow(index, size, scrambledPieces);
+        }
+    }
+}// end specificScrambler()
+//----------------------------------------------------------------------------
+
+void Board ::setUpRotation() {
+    char charInput = ' ';
+    int rowOrColumnIndex = -1;
+    int rotationAmount = 0;
+
+    while(true){
+        cout << "\n"
+             << "   Enter the row/column you would like to rotate, and the number of positions to rotate by.\n"
+             << "   This should be in the format of <R or C> <row/column number> <number of positions to rotate>,\n"
+             << "   where valid row and column numbers are between 0 and " << boardSize -1 << ",\n"
+             << "   E.g. R 0 1 would rotate the top row (row 0) of the board to the right once,\n"
+             << "        c 1-2 would rotate the second column (col 1) of the board upwards twice. \n"
+             << "   Your choice: ";
+        cin >> charInput;
+        cin >> rowOrColumnIndex;
+        cin >> rotationAmount;
+        charInput = tolower(charInput);
+
+        // checking if user inputs 'r' or 'c'
+        if(charInput != 'r' && charInput != 'c'){
+            cout << "First input must be 'R' or 'C'. Try again." << endl;
+            continue;
+        }
+
+        // checking if user inputs a row or column in range
+        if(rowOrColumnIndex < 0 || rowOrColumnIndex >= boardSize){
+            cout << "Number must be between 0 and " << boardSize -1 << ". Try again." << endl;
+            continue;
+        }
+
+        // calling specific scrambler when all inputs are validated
+        specificScrambler(charInput, rowOrColumnIndex, rotationAmount);
+        break;
+
+    }// end while
+
+}// end setUpRotation()
+//----------------------------------------------------------------------------
+
+// checks if the scrambled board matches the unscrambled board
+bool Board ::checkForWin() {
+    if(scrambledPieces == pieces){
+        return true;
+    }
+    else {
+        return false;
+    }
+}// end checkForWin()
+//----------------------------------------------------------------------------
 
 //reads in words from the dictionary and stores them into the dictionary vector
 void readInDictionary(vector <string> & dictionary){
@@ -322,6 +404,7 @@ int main(){
             cout << "Choose your board size (must be a number greater than or equal to 4):";
             cin >> sizeInput;
         }
+        int savedSize = sizeInput;
         Board myBoard(sizeInput);                  // setting board size
         totalPiecesLeft = sizeInput * sizeInput;   // initializing totalPieces
         //TODO generate board
@@ -339,31 +422,29 @@ int main(){
         }
 
         // scrambling the board for the first time
+        int savedScrambleNum = sizeInput;
         myBoard.scrambler(sizeInput);
 
 
-        cout << "These are the words that you should try to spell out using the board, in order:\n"
-             << "   ";
-        myBoard.printWords();
-        cout << endl;
-
-        // !!appending space works so far!!
-//        string test = "Test";
-//        test.append(" ");
-//        cout << test << "space" << endl;
-//        cout << endl;
 
 
-        //TODO scrambled words here
+        Board newBoard(savedSize);
+        vector <string> newWordList;
 
-        char charInput;
-        int rowOrColumnIndex;
-        int rotationAmount;
-        bool isInputCorrect = false;
-        bool check = false;
+
 
         while(userInput != 'q'){
-            myBoard.displayBoard(); // TODO supposed to be scrambled
+
+
+
+            cout << "These are the words that you should try to spell out using the board, in order:\n"
+                 << "   ";
+            myBoard.printWords();
+            cout << endl;
+
+            cout << "Current board:" << endl;
+
+            myBoard.displayBoard();
 
             cout << "Enter one of the following:\n"
                  << "   R to rotate a row or column,\n"
@@ -374,53 +455,45 @@ int main(){
                  << "   Q to quit." << endl;
             cout << "Your choice:";
             cin >> userInput;
-            tolower(userInput);
+            userInput = tolower(userInput);
 
             switch(userInput){
                 case 'r':
-                    while((rowOrColumnIndex < 0 || rowOrColumnIndex > myBoard.getSize() -1) && check == false){
-                        cout << "Enter the row/column you would like to rotate, and the number of positions to rotate by.\n"
-                             << "This should be in the format of <R or C> <row/column number> <number of positions to rotate>,\n"
-                             << "where valid row and column numbers are between 0 and " << myBoard.getSize() -1 << ",\n"
-                             << "E.g. R 0 1 would rotate the top row (row 0) of the board to the right once,\n"
-                             << "    c 1 -2 would rotate the second column (col 1) of the board upwards twice." << endl;
-                        cout << "Your choice:";
-                        cin >> charInput >> rowOrColumnIndex >> rotationAmount;
-                        if(charInput == 'r' || charInput == 'c'){
-                            check = true;
-                        }
-                        // if user doesn't enter 'r' or 'c'
-                        if(!check){
-                            cout << "First input must be 'R' or 'C'. Try again." << endl;
-                            check = false;
-                        }
-                        // if row or column Index is not between 0 and bord size -1
-                        else if(rowOrColumnIndex < 0 || rowOrColumnIndex > myBoard.getSize() -1){
-                            cout << "Number must be between 0 and 3. Try again." << endl;
-                            check = false;
-                        }
-                        cout << endl;
-                    }// end while
-
-                    // rotating a row or column
-                    myBoard.scrambler(rotationAmount);
+                    myBoard.setUpRotation();
                     break;
 
                 case 'c':
                     cout << "The completed board should look like:" << endl;
-
                     myBoard.displayBoard(false);
                     break;
 
+                case 'b':
+                    myBoard.resetBoard();
+                    break;
 
+                case 'g':
+                    myBoard.setUpNewBoard();
+                    myBoard.generateBoard(dictionary, totalPiecesLeft);
+                    myBoard.scrambler(savedScrambleNum);
+                    break;
 
                 default:
                     break;
 
             }// end switch
-        }
 
+            // checks if user unscrambled the board
+            if(myBoard.checkForWin()){
+                myBoard.displayBoard(false);
+                cout << "Congratulations, you won! Thank you for playing!" << endl;
+                cout << "Exiting program..." << endl;
+                return 0;
+            }
+
+        }// end while
     }// end initial prompts
+
+
 
 
     cout << "Thank you for playing!" << endl;
