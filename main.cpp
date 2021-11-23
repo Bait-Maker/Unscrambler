@@ -40,20 +40,21 @@ using namespace std;
 class Board{
 
 public:
-    Board(int size){ boardSize = size;}
-    int getSize(){return boardSize;}
-    string getPieces(){return pieces;}
-    void resetBoard(){scrambledPieces = userScrambledPieces;}
-    void setUpNewBoard(){wordList.erase(wordList.begin(), wordList.end());}
+    Board(int size){ boardSize = size;}                              // sets the board size
+    void resetBoard(){scrambledPieces = userScrambledPieces;}        // resets board to fist scramble
+    void setUpNewBoard(){wordList.erase(
+            wordList.begin(), wordList.end());}            // creates new list of words (for option 'G')
     void displayBoard(bool printScrambled);
-    void generateBoard(const vector <string> &data, int piecesLeft);
-    void printWords();
-    void scrambler(int numOfScrambles);
-    void specificScrambler(char rowOrColumn, int index, int rotationAmount);
-    void moveRow(int randomRow, int theBoardSize, string &piecesToScramble);
-    void moveColumn(int columnIndex, int theBoardSize, string &piecesToScramble);
-    void setUpRotation();
-    bool checkForWin();
+    void generateBoard(const vector <string> &data, int piecesLeft);   // takes random words and fills the board
+
+    void scrambler(int numOfScrambles);  // scrambles board for the fist time
+    void specificScrambler(char rowOrColumn, int index, int rotationAmount);       // takes care of user scrambles
+    void moveRow(int randomRow, int theBoardSize, string &piecesToScramble);       // rotates row
+    void moveColumn(int columnIndex, int theBoardSize, string &piecesToScramble);  // rotates column
+
+    void setUpRotation();   // goes through series of checks to make sure user enters valid inputs
+    bool checkForWin();     // checks if the scrambled board matches the unscrambled board
+    void printWords();      // displays a list of the words on the board
 
 
 private:
@@ -80,6 +81,7 @@ void Board ::printWords(){
 }// end printWords()
 //----------------------------------------------------------------------------
 
+// displays the board
 void Board ::displayBoard(bool printScrambled=true) {
 
     string piecesToPrint;  // will either be unscrambled or scrambled pieces
@@ -270,14 +272,13 @@ void Board ::scrambler(int numOfScrambles) {
 }// end scrambler()
 //----------------------------------------------------------------------------
 
+// takes care of scrambles made by the user (option 'R')
 void Board ::specificScrambler(char rowOrColumn, int index, int rotationAmount) {
 
     int size = boardSize;                    // size of the board
 
     // user enters a negative rotation
     if(rotationAmount < 0){
-
-        int num = rotationAmount;
         rotationAmount = size + rotationAmount;
     }
 
@@ -296,6 +297,8 @@ void Board ::specificScrambler(char rowOrColumn, int index, int rotationAmount) 
 }// end specificScrambler()
 //----------------------------------------------------------------------------
 
+// (option 'R') check if the user is inputting the right values
+// prompts them to re-enter if the inputs are wrong or out of range
 void Board ::setUpRotation() {
     char charInput = ' ';
     int rowOrColumnIndex = -1;
@@ -393,24 +396,27 @@ int main(){
     userInput = tolower(userInput);
 
 
+    // if the user enters 'B'
     if(userInput != 'q') {
         cout << "Choose your board size (must be a number greater than or equal to 4):";
         cin >> sizeInput;
         cout << endl;
 
-
+        // making sure size of the board is at least 4
         while(sizeInput < 4){
             cout << "The board size must be at least 4. Retry.";
             cout << "Choose your board size (must be a number greater than or equal to 4):";
             cin >> sizeInput;
         }
-        int savedSize = sizeInput;
+
+        int savedSize = sizeInput;                  // saving the size of the current board
         Board myBoard(sizeInput);                  // setting board size
         totalPiecesLeft = sizeInput * sizeInput;   // initializing totalPieces
-        //TODO generate board
-        myBoard.generateBoard(dictionary, totalPiecesLeft);
-        //myBoard.displayBoard();
 
+        // generating the board for the first time
+        myBoard.generateBoard(dictionary, totalPiecesLeft);
+
+        // asking for the amount of scrambles
         cout << "Choose the number of times you would like the board to be scrambled (must be a single number >= 1):";
         cin >> sizeInput;
 
@@ -425,17 +431,12 @@ int main(){
         int savedScrambleNum = sizeInput;
         myBoard.scrambler(sizeInput);
 
-
-
-
+        // for if a new board is generated
         Board newBoard(savedSize);
         vector <string> newWordList;
 
-
-
+        // main loop until user wins or enters 'Q'
         while(userInput != 'q'){
-
-
 
             cout << "These are the words that you should try to spell out using the board, in order:\n"
                  << "   ";
@@ -443,7 +444,6 @@ int main(){
             cout << endl;
 
             cout << "Current board:" << endl;
-
             myBoard.displayBoard();
 
             cout << "Enter one of the following:\n"
@@ -458,19 +458,23 @@ int main(){
             userInput = tolower(userInput);
 
             switch(userInput){
+               // rotate row or column
                 case 'r':
                     myBoard.setUpRotation();
                     break;
 
+                    // view completed board
                 case 'c':
                     cout << "The completed board should look like:" << endl;
                     myBoard.displayBoard(false);
                     break;
 
+                    // reset the board to the original scramble
                 case 'b':
                     myBoard.resetBoard();
                     break;
 
+                    // generate a new board with new random words
                 case 'g':
                     myBoard.setUpNewBoard();
                     myBoard.generateBoard(dictionary, totalPiecesLeft);
@@ -483,6 +487,7 @@ int main(){
             }// end switch
 
             // checks if user unscrambled the board
+            // if they match exit the program
             if(myBoard.checkForWin()){
                 myBoard.displayBoard(false);
                 cout << "Congratulations, you won! Thank you for playing!" << endl;
@@ -494,10 +499,7 @@ int main(){
     }// end initial prompts
 
 
-
-
     cout << "Thank you for playing!" << endl;
     cout << "Exiting program..." << endl;
-
     return 0;
 }// end main()
